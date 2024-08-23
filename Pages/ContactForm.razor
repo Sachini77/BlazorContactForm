@@ -1,0 +1,67 @@
+﻿@page "/contact"
+@using BlazorContactForm.Models
+@using BlazorContactForm.Data
+@using BlazorContactForm.Services
+
+
+
+@inject ApplicationDbContext DbContext
+@inject NavigationManager Navigation
+@inject EmailService EmailService
+
+
+
+<div class="col border p-3">
+<h1 class="text-Primary"style="background-color:aliceblue"  > Contact Form </h1>
+    <EditForm Model="contactMessage" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+        <div style="margin-bottom: 10px;">
+        <label for="name">Name</label>
+            <InputText id="name" @bind-Value="contactMessage.Name" style="width: 25%; padding: 2px;" />
+        <ValidationMessage For="@(() => contactMessage.Name)" />
+    </div>
+
+        <div style="margin-bottom: 10px;">
+        <label for="email">Email</label>
+            <InputText id="email" @bind-Value="contactMessage.Email" style="width: 25%; padding: 2px;" />
+        <ValidationMessage For="@(() => contactMessage.Email)" />
+    </div>
+
+        <div style="margin-bottom: 10px;">
+        <label for="subject">Subject</label>
+            <InputText id="subject" @bind-Value="contactMessage.Subject" style="width: 25%; padding: 2px;" />
+        <ValidationMessage For="@(() => contactMessage.Subject)" />
+    </div>
+
+        <div style="margin-bottom: 10px;">
+        <label for="message">Message</label>
+            <InputTextArea id="message" @bind-Value="contactMessage.Message" style="width: 25%; padding: 2px;" />
+        <ValidationMessage For="@(() => contactMessage.Message)" />
+    </div>
+
+    <button type="submit">Submit</button>
+</EditForm>
+</div>
+
+
+
+
+
+@code {
+    private ContactMessage contactMessage = new();
+    
+    
+    private async Task HandleValidSubmit()
+    {
+        DbContext.ContactMessages.Add(contactMessage);
+        await DbContext.SaveChangesAsync();
+        // Here, you would add the code to send the notification email.
+        EmailService.SendEmail("admin@example.com", "New Contact Message", $"Message from {contactMessage.Name}: {contactMessage.Message}");
+
+        Navigation.NavigateTo("/success");
+
+        
+    }
+}
