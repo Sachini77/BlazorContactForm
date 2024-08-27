@@ -40,7 +40,7 @@ namespace BlazorContactForm.Models
                 }
                 catch (Exception ex)
                 {
-                    // Handle exception (log, rethrow, etc.)
+                    
                     Console.WriteLine($"An error occurred while sending the email: {ex.Message}");
                 }
             }

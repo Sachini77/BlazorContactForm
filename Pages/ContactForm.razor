@@ -60,14 +60,14 @@
     {
         try
         {
-            // Set the created date
+            
             contactMessage.SubmittedOn = DateTime.Now;
 
-            // Add the contact message to the database
+            
             DbContext.ContactMessages.Add(contactMessage);
             await DbContext.SaveChangesAsync();
 
-            // Send a notification email
+           
             await Emailservice.SendEmailAsync(
      "spriyangani@invorg.com",
      $"New Contact Form Submission: {contactMessage.Subject}",
@@ -79,25 +79,25 @@
 
 
 
-            // Show success message
+            
             isSubmitted = true;
 
-            // Refresh the UI
+           
             StateHasChanged();
 
-            // Wait for 4 seconds before hiding the success message
+           
             await Task.Delay(4000);
             isSubmitted = false;
 
-            // Refresh the UI again after the delay
+           
             StateHasChanged();
 
-            // Clear the form after submission
+            
             contactMessage = new ContactMessage();
         }
         catch (Exception ex)
         {
-            // Handle any errors that occur
+           
             Console.WriteLine($"An error occurred: {ex.Message}");
         }
     }
