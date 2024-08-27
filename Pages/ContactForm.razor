@@ -4,64 +4,101 @@
 @using BlazorContactForm.Services
 
 
-
 @inject ApplicationDbContext DbContext
 @inject NavigationManager Navigation
-@inject EmailService EmailService
+@inject IEmailService Emailservice
 
 
-
-<div class="col border p-3">
-<h1 class="text-Primary"style="background-color:aliceblue"  > Contact Form </h1>
+<div class="form-container">
+    <h1 class="text-Primary" style="background-color:aliceblue"> Contact Form </h1>
     <EditForm Model="contactMessage" OnValidSubmit="HandleValidSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-        <div style="margin-bottom: 10px;">
-        <label for="name">Name</label>
-            <InputText id="name" @bind-Value="contactMessage.Name" style="width: 25%; padding: 2px;" />
-        <ValidationMessage For="@(() => contactMessage.Name)" />
-    </div>
+        <div class="form-field">
+            <label for="name">Name</label>
+            <InputText id="name" @bind-Value="contactMessage.Name" />
+            <ValidationMessage For="@(() => contactMessage.Name)" />
+        </div>
 
-        <div style="margin-bottom: 10px;">
-        <label for="email">Email</label>
-            <InputText id="email" @bind-Value="contactMessage.Email" style="width: 25%; padding: 2px;" />
-        <ValidationMessage For="@(() => contactMessage.Email)" />
-    </div>
+        <div class="form-field">
+            <label for="email">Email</label>
+            <InputText id="email" @bind-Value="contactMessage.Email" />
+            <ValidationMessage For="@(() => contactMessage.Email)" />
+        </div>
 
-        <div style="margin-bottom: 10px;">
-        <label for="subject">Subject</label>
-            <InputText id="subject" @bind-Value="contactMessage.Subject" style="width: 25%; padding: 2px;" />
-        <ValidationMessage For="@(() => contactMessage.Subject)" />
-    </div>
+        <div class="form-field">
+            <label for="subject">Subject</label>
+            <InputText id="subject" @bind-Value="contactMessage.Subject" />
+            <ValidationMessage For="@(() => contactMessage.Subject)" />
+        </div>
 
-        <div style="margin-bottom: 10px;">
-        <label for="message">Message</label>
-            <InputTextArea id="message" @bind-Value="contactMessage.Message" style="width: 25%; padding: 2px;" />
-        <ValidationMessage For="@(() => contactMessage.Message)" />
-    </div>
+        <div class="form-field">
+            <label for="message">Message</label>
+            <InputTextArea id="message" @bind-Value="contactMessage.Message" />
+            <ValidationMessage For="@(() => contactMessage.Message)" />
+        </div>
 
-    <button type="submit">Submit</button>
-</EditForm>
+        <button type="submit" class="btn btn-success">Submit</button>
+    </EditForm>
+
+
+
+    @if (isSubmitted)
+    {
+        <div class="alert alert-success mt-3">
+            Your message has been sent successfully!
+        </div>
+    }
 </div>
-
-
-
-
 
 @code {
     private ContactMessage contactMessage = new();
-    
-    
+    private bool isSubmitted = false;
+
     private async Task HandleValidSubmit()
     {
-        DbContext.ContactMessages.Add(contactMessage);
-        await DbContext.SaveChangesAsync();
-        // Here, you would add the code to send the notification email.
-        EmailService.SendEmail("admin@example.com", "New Contact Message", $"Message from {contactMessage.Name}: {contactMessage.Message}");
+        try
+        {
+            // Set the created date
+            contactMessage.SubmittedOn = DateTime.Now;
 
-        Navigation.NavigateTo("/success");
+            // Add the contact message to the database
+            DbContext.ContactMessages.Add(contactMessage);
+            await DbContext.SaveChangesAsync();
 
-        
+            // Send a notification email
+            await Emailservice.SendEmailAsync(
+     "spriyangani@invorg.com",
+     $"New Contact Form Submission: {contactMessage.Subject}",
+         $@"<h1>New Message</h1>
+        <p><b>Name:</b> {contactMessage.Name}</p>
+        <p><b>Email:</b> {contactMessage.Email}</p>
+        <p><b>Subject:</b> {contactMessage.Subject}</p>
+        <p><b>Message:</b> {contactMessage.Message}</p>");
+
+
+
+            // Show success message
+            isSubmitted = true;
+
+            // Refresh the UI
+            StateHasChanged();
+
+            // Wait for 4 seconds before hiding the success message
+            await Task.Delay(4000);
+            isSubmitted = false;
+
+            // Refresh the UI again after the delay
+            StateHasChanged();
+
+            // Clear the form after submission
+            contactMessage = new ContactMessage();
+        }
+        catch (Exception ex)
+        {
+            // Handle any errors that occur
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
     }
 }

@@ -1,23 +1,49 @@
-﻿using MailKit.Net.Smtp;
+﻿using Microsoft.Extensions.Options;
+using MailKit.Net.Smtp;
 using MimeKit;
+using System.Threading.Tasks;
+using BlazorContactForm.Models;
+using BlazorContactForm.Services;
 
-namespace BlazorContactForm.Services
+namespace BlazorContactForm.Models
+
 {
-    public class EmailService
+    public class EmailService : IEmailService
     {
-        public void SendEmail(string to, string subject, string body)
-        {
-            var email = new MimeMessage();
-            email.From.Add(new MailboxAddress("NoReply", "noreply@example.com"));
-            email.To.Add(MailboxAddress.Parse(to));
-            email.Subject = subject;
-            email.Body = new TextPart(MimeKit.Text.TextFormat.Html) { Text = body };
+        private readonly MailSettings _mailSettings;
 
-            using var smtp = new SmtpClient();
-            smtp.Connect("smtp.example.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
-            smtp.Authenticate("your_email@example.com", "your_password");
-            smtp.Send(email);
-            smtp.Disconnect(true);
+        public EmailService(IOptions<MailSettings> mailSettings)
+        {
+            _mailSettings = mailSettings.Value;
+        }
+
+        public async Task SendEmailAsync(string to, string subject, string body)
+        {
+            var emailMessage = new MimeMessage();
+            emailMessage.From.Add(new MailboxAddress("Your Website", _mailSettings.FromEmail));
+            emailMessage.To.Add(new MailboxAddress("", to));
+            emailMessage.Subject = subject;
+
+            emailMessage.Body = new TextPart("html")
+            {
+                Text = body
+            };
+
+            using (var client = new SmtpClient())
+            {
+                try
+                {
+                    await client.ConnectAsync(_mailSettings.Host, _mailSettings.Port, MailKit.Security.SecureSocketOptions.StartTls);
+                    await client.AuthenticateAsync(_mailSettings.Username, _mailSettings.Password);
+                    await client.SendAsync(emailMessage);
+                    await client.DisconnectAsync(true);
+                }
+                catch (Exception ex)
+                {
+                    // Handle exception (log, rethrow, etc.)
+                    Console.WriteLine($"An error occurred while sending the email: {ex.Message}");
+                }
+            }
         }
     }
 }

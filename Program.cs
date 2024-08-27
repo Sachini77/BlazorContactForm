@@ -1,4 +1,5 @@
 using BlazorContactForm.Data;
+using BlazorContactForm.Models;
 using BlazorContactForm.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -18,8 +19,14 @@ namespace BlazorContactForm
             builder.Services.AddSingleton<WeatherForecastService>();
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-            builder.Services.AddScoped<EmailService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
 
+            builder.Services.AddServerSideBlazor().AddCircuitOptions(options =>
+            {
+                options.JSInteropDefaultCallTimeout = TimeSpan.FromSeconds(60);
+                options.DetailedErrors = true; // Enable detailed errors for debugging
+            });
 
 
             var app = builder.Build();
